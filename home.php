@@ -41,7 +41,7 @@ if (!$connection) {
 
 // Get data from database
 $productsCategories = $connection->query("select * from ProductCategory;");
-$products = $connection->query("SELECT Product.productID, Product.imagePath, Product.label, Product.unitPrice, Product.minQuantity, Product.stockQuantity, Product.category, ProductCategory.categoryName FROM Product JOIN ProductCategory ON Product.categoryID_fk = ProductCategory.categoryID;");
+$products = $connection->query("SELECT Product.productID, Product.imagePath, Product.label, Product.unitPrice, Product.minQuantity, Product.stockQuantity, Product.category, ProductCategory.categoryName FROM Product JOIN ProductCategory ON Product.categoryID_fk = ProductCategory.categoryID ORDER BY Product.categoryID_fk;");
 // Get data from database
 
 ?>
@@ -54,22 +54,22 @@ $products = $connection->query("SELECT Product.productID, Product.imagePath, Pro
         <select name="selectedCategory" id="categorySelect">
             <?php
             // Iterate through the fetched categories and populate the dropdown
-            echo '<option value="All" style="color: red; font-size: 18px;">All</option>';
+            echo '<option value="All">All</option>';
             while ($productsCategory = $productsCategories->fetch_assoc()) {
                 $categoryName = $productsCategory['categoryName'];
-                echo '<option value="' . $categoryName . '" style="color: red; font-size: 18px;">' . $categoryName . '</option>';
+                echo '<option value="' . $categoryName . '">' . $categoryName . '</option>';
             }
             ?>
         </select>
 
-        <button type="submit">Get Selected Category</button>
+        <button class = "filter-button" type="submit">Get Selected Category</button>
 </form>
 <!-- Filter products by category -->
 
 
 <!-- Filter products that's have'nt a enough quantity -->
 <form method="post">
-    <button name="end-soon-products" type="submit">Products end soon</button>
+    <button class = "filter-button" name="end-soon-products" type="submit">Products that will expire soon</button>
 </form>
 <!-- Filter products that's have'nt a enough quantity -->
 
@@ -130,6 +130,7 @@ function displayProducts($products)
 {
     echo '<section class="products-catalog-section">';
     echo '<div class="products-catalog-cards">';
+
     while ($product = $products->fetch_assoc()) {
         $imagePath = $product['imagePath'];
         $label = $product['label'];
@@ -139,6 +140,8 @@ function displayProducts($products)
         echo '<div class="products-catalog-card" style="background-image: url(\'assets/images/' . $imagePath . '\');">';
         echo '<p>' . $label . '</p>';
         echo '<p>' . $unitPrice . ' DH</p>';
+
+
         echo '</div>';
     }
     echo '</div>';
