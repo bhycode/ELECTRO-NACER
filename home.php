@@ -23,16 +23,7 @@
     </section>
     
 
-    <!-- Search field -->
-    <section class="search-setion">
-        <input id = "search-edt" name="search-edt" placeholder="Search">
-        <svg id = "search-button" xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960"><path d="M784-120 532-372q-30 24-69 38t-83 14q-109 0-184.5-75.5T120-580q0-109 75.5-184.5T380-840q109 0 184.5 75.5T640-580q0 44-14 83t-38 69l252 252-56 56ZM380-400q75 0 127.5-52.5T560-580q0-75-52.5-127.5T380-760q-75 0-127.5 52.5T200-580q0 75 52.5 127.5T380-400Z"/></svg>
-    </section>
-    <!-- Search field -->
-
-    <section>
-    </section>
-
+<!-- Connect to database and get data -->
 <?php
 $hostname = "localhost";
 $username = "root";
@@ -47,45 +38,115 @@ if (!$connection) {
     die("Connection failed: " . mysqli_connect_error());
 }
 
-// Fetch products from the database
-$query = "SELECT Product.productID, Product.imagePath, Product.label, Product.unitPrice, Product.minQuantity, Product.stockQuantity, Product.category, ProductCategory.categoryName FROM Product JOIN ProductCategory ON Product.categoryID_fk = ProductCategory.categoryID;";
-$result = $connection->query($query);
+
+// Get data from database
+$productsCategories = $connection->query("select * from ProductCategory;");
+$products = $connection->query("SELECT Product.productID, Product.imagePath, Product.label, Product.unitPrice, Product.minQuantity, Product.stockQuantity, Product.category, ProductCategory.categoryName FROM Product JOIN ProductCategory ON Product.categoryID_fk = ProductCategory.categoryID;");
+// Get data from database
 
 ?>
 
-<!-- Products -->
-<section class="products-catalog-section">    
-    <div class="products-catalog-cards">
-        
-        <?php
-        // Loop through the fetched products and display each card
-        while ($product = $result->fetch_assoc()) {
-            $imagePath = $product['imagePath'];
-            $label = $product['label'];
-            $unitPrice = $product['unitPrice'];
-            $minQuantity = $product['minQuantity'];
-            $stockQuantity = $product['stockQuantity'];
-            
-            
-            // Display product card
-            echo '<div class="products-catalog-card" style="background-image: url(\'assets/images/' . $imagePath . '\');">';
-            echo '<p>' . $label . '</p>';
-            echo '<p>' . $unitPrice . ' DH</p>';
-            echo '</div>';
-        }
 
 
-        ?>
-        
+<!-- Filter products by category -->
+<form method="post">
+        <label for="categorySelect">Select a category:</label>
+        <select name="selectedCategory" id="categorySelect">
+            <?php
+            // Iterate through the fetched categories and populate the dropdown
+            echo '<option value="All" style="color: red; font-size: 18px;">All</option>';
+            while ($productsCategory = $productsCategories->fetch_assoc()) {
+                $categoryName = $productsCategory['categoryName'];
+                echo '<option value="' . $categoryName . '" style="color: red; font-size: 18px;">' . $categoryName . '</option>';
+            }
+            ?>
+        </select>
 
-    </div>
-</section>
-<!-- Products -->
+        <button type="submit">Get Selected Category</button>
+</form>
+<!-- Filter products by category -->
+
+
+<!-- Filter products that's have'nt a enough quantity -->
+<form method="post">
+    <button name="end-soon-products" type="submit">Products end soon</button>
+</form>
+<!-- Filter products that's have'nt a enough quantity -->
+
+
 
 <?php
-// Close the MySQL connection
-$connection->close();
+// Check if the form is submitted
+if ($_SERVER["REQUEST_METHOD"] == "POST") {
+    // Get the selected category from the form submission
+    
+
+    // Filter data by quantity
+    if (isset($_POST["end-soon-products"])) {
+
+        $filteredProductsByQuantity = $connection->query("SELECT * from Product where stockQuantity < minQuantity;");
+
+
+        displayProducts($filteredProductsByQuantity);
+    }
+    // Filter data by quantity
+
+
+    if (isset($_POST['selectedCategory'])) {
+        $selectedCategory = $_POST['selectedCategory'];
+
+        if($selectedCategory == "All") {
+            displayProducts($products);
+        } else {
+            // Fetch products based on the selected category
+            $filteredProducts = $connection->query("SELECT Product.productID, Product.imagePath, Product.label, Product.unitPrice, Product.minQuantity, Product.stockQuantity, Product.category, ProductCategory.categoryName FROM Product JOIN ProductCategory ON Product.categoryID_fk = ProductCategory.categoryID and ProductCategory.categoryName = '$selectedCategory';");
+            // Call the function to display filtered products
+            displayProducts($filteredProducts);
+        }
+    }
+
+    
+    
+} else {
+    // If the form is not submitted, display all products initially
+    displayProducts($products);
+}
 ?>
+
+
+
+
+
+
+
+
+
+
+
+
+<?php
+// Function showing products
+function displayProducts($products)
+{
+    echo '<section class="products-catalog-section">';
+    echo '<div class="products-catalog-cards">';
+    while ($product = $products->fetch_assoc()) {
+        $imagePath = $product['imagePath'];
+        $label = $product['label'];
+        $unitPrice = $product['unitPrice'];
+
+        // Display product card
+        echo '<div class="products-catalog-card" style="background-image: url(\'assets/images/' . $imagePath . '\');">';
+        echo '<p>' . $label . '</p>';
+        echo '<p>' . $unitPrice . ' DH</p>';
+        echo '</div>';
+    }
+    echo '</div>';
+    echo '</section>';
+}
+?>
+
+
 
 
 
